@@ -9,12 +9,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+char **month = (char *[]){"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 // from slides
 void i2c_init(void)
 {
   TWSR &= ~(1 << TWBR0) & ~(1 << TWBR1); // set TWI prescaler = 1
-  TWBR = 0x48;                           // set i2c clock = 100kHz and crystal freq = 16MHz
-  TWCR |= (1 << TWEN);                   // Enable TWI interface
+  // TWBR = 0x48;                           // set i2c clock = 100kHz and crystal freq = 16MH
+  TWBR = 0x20;         // set i2c clock = 100kHz and crystal freq = 8MHz
+  TWCR |= (1 << TWEN); // Enable TWI interface
 }
 
 void i2c_start(void)
@@ -50,12 +53,11 @@ void rtc_init(void)
   i2c_init();
   i2c_start();
   i2c_write(0xD0); // 1101 0000 D$1307's Address
-  i2c_write(0x07); // 0000 0111 Control
+  i2c_write(0x07);
   i2c_write(0x00);
   i2c_stop();
 }
-void Ito_setTime(unsigned char h, unsigned char m, unsigned char s)
-// eg. rtc_setTime (0x23, 0x59,0×50) = 23:59:50
+void rtc_setTime(uint8_t h, uint8_t m, uint8_t s, uint8_t D, uint8_t M, uint8_t Y)
 {
   i2c_start();
   i2c_write(0xD0);
@@ -63,26 +65,32 @@ void Ito_setTime(unsigned char h, unsigned char m, unsigned char s)
   i2c_write(s);
   i2c_write(m);
   i2c_write(h);
+  i2c_write(0x00);
+  i2c_write(D);
+  i2c_write(M);
+  i2c_write(Y);
   i2c_stop();
 }
-void rtc_getTime(unsigned char *h, unsigned char *m,
-                 unsigned char
-                     *s)
-// eg. rtc_getTime (si, &j, &k) ;
-// then lcdData BCD(i);
-// then lcdData(' :')
-// then ...
+
+void rtc_getTime(uint8_t *h, uint8_t *m, unsigned char *s, uint8_t *D, uint8_t *M, uint8_t *Y)
 {
   i2c_start();
   i2c_write(0xD0);
   i2c_write(0x00);
-  i2c_stop(); //
+  i2c_stop();
+
   i2c_start();
-  i2c_write(0x1);
-  *s = i2c_read(1);
-  // multiple reading
+
+  i2c_write(0xD1);
+
+  *s = i2c_read(1); // multiple reading
+
   *m = i2c_read(1); // still reading
-  *h = i2c_read(0); // finish reading
+  *h = i2c_read(1); // still reading
+  i2c_read(1);      // skip day of the week
+  *D = i2c_read(1); // still reading
+  *M = i2c_read(1); // still reading
+  *Y = i2c_read(0); // finish reading
   i2c_stop();
 }
 
@@ -179,31 +187,26 @@ void initLCD()
 }
 
 char buffer[16];
+char buffer2[16];
+
+uint8_t h, m, s, D, M, Y;
 
 int main()
 {
   _delay_ms(1000);
   initLCD();
   lcdClearScreen();
-  initSPIforExternalADC();
-
+  rtc_init();
+  rtc_setTime(0x16, 0x44, 0x00, 0x02, 0x05, 0x24); // 16:15:00 02 may 2024
   while (1)
   {
-
-    // // receive data from external adc
-    float voltage = receiveSPIExternalADC() / 8192.0 * 5; // 0-8192 -> 0-5000
-    // 100c -> 1.5v
-    // 0c -> 0.40v
-    // convert voltage to temperature on straight line
-    float temperature = (voltage - 0.40) / 1.5 * 100; // 0-100c
-    itoa(temperature, buffer, 10);
+    rtc_getTime(&h, &m, &s, &D, &M, &Y);
+    sprintf(buffer, "%02x:%02x:%02x", h, m, s);
+    sprintf(buffer2, "%02x %s 20%02x", D, month[M], Y);
     lcdFirstLine();
-    lcdDisplayString("T: ");
     lcdDisplayString(buffer);
-    lcdDisplayString("c");
     lcdSecondLine();
-    lcdDisplayString("Temperature ");
-
+    lcdDisplayString(buffer2);
     _delay_ms(1000);
     lcdClearScreen();
   }
