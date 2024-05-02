@@ -60,7 +60,7 @@ void lcdDisplayString(char *str)
   while (*str != '\0')
   {
     sendLCDData(*str);
-    _delay_ms(10);
+    _delay_ms(1);
     str++; // move pointer by 1
   }
 }
@@ -68,12 +68,12 @@ void lcdDisplayString(char *str)
 void lcdClearScreen()
 {
   sendLCDCommand(0x1);
-  _delay_ms(10);
+  _delay_ms(2);
 }
 
 void initLCD()
 {
-  _delay_ms(100);
+  _delay_ms(200);
 
   DDRC |= 0x0F;                         // set as output PC0-3
   PORTC &= 0xF0;                        // clear PC0-3
@@ -92,50 +92,58 @@ void initLCD()
 
 char buffer[16];
 
-uint16_t adcValue;
+// generate trigger pulse
+// 10us high pulse
+void generateTrigger()
+{
+  PORTC |= (1 << PORTC4); // set trigger pin high
+  _delay_us(10);
+  PORTC &= ~(1 << PORTC4); // set trigger pin low
+}
 
 int main()
 {
   initLCD();
   lcdClearScreen();
-  //  pg20-21
-  //   set adc target pin
-  ADMUX &= 0x00; // clear mux
-  // set reference voltatge to external avcc
-  ADMUX |= (0b00000100); // set mux as for adc4
-  ADMUX |= (1 << REFS0); // set REFS0 as 1, aref with external capacitor at aref
-  // pg25
-  ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADIE); // set clock for adc -> division factor 128 , enable interupt by ADIE
+  DDRC |= (1 << DDC4);  // PC4 output for trigger ultrasound
+  DDRB &= ~(1 << DDB0); // PB0 input for echo ultrasound
 
-  sei();
+  // input capture
+  // stop timer
+  TCCR1B = 0;
 
   while (1)
   {
+    generateTrigger();
+    // reset timer
+    TCNT1 = 0;
+    TCCR1B |= (1 << CS11);  // start timer set prescaler 8 -> 8MHz/8 = 1MHz -> 1us
+    TCCR1B |= (1 << ICES1); // set input capture edge select to rising edge
+    // start timer
+    // wait for echo
+    while (!(TIFR1 & (1 << ICF1)))
+      ;
+    // toggle edge
+    TCCR1B ^= (1 << ICES1);
+    // clear flag
+    TIFR1 |= (1 << ICF1);
+    // wait for echo
+    while (!(TIFR1 & (1 << ICF1)))
+      ;
+    // stop timer
+    TCCR1B = 0;
+    // get duration
+    uint16_t duration = ICR1;
 
-    // see timing diagram pg28-29
-    //  start conversion
-    //  ADCSRA ADC Control and Status Register A
-    ADCSRA |= (1 << ADSC);
+    // calculate distance
+    float distance = ((duration * 343.0) / (2 * 100 * 100) - 40); // 1/58
 
-    // interrupt will be triggered when conversion is done
-
-    // ADIF -> ADC Interupt Flag
-    // read done
-    // adc is value 0-1024 = 0-5V
-    // adc to voltage mV : convert to mVolt scale (adcValue/1024.0 * 5) /1000
-    // T = (V-500)/10
-    // // uint16_t voltage = (adcValue / 1024.0 * 5000); //
-    // itoa(voltage, buffer, 10);
-    lcdDisplayString("Voltage : ");
-    // lcdDisplayString(buffer);
-    lcdDisplayString("mv");
+    itoa(distance, buffer, 10);
+    lcdDisplayString("Dist: ");
+    lcdDisplayString(buffer);
+    lcdDisplayString("cm");
 
     _delay_ms(1000);
     lcdClearScreen();
   }
-}
-
-ISR(ADC_vect)
-{
-  adcValue = ADC;
 }

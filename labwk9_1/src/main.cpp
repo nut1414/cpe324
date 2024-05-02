@@ -9,6 +9,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void initSPIforExternalADC()
+{
+  // set MOSI, CS as output
+  DDRB |= (1 << DDB2) | (1 << DDB5); // set as output PB2,5
+
+  // mode 0, MSB first
+  SPCR |= (1 << SPE) | (1 << MSTR); // spi enable, // master mode
+  // fosc/8
+  // 8mhz/8 = 1mhz -> maximum for external adc chip 3201
+  SPCR |= (1 << SPR0);
+  SPSR |= (1 << SPI2X);
+}
+
+uint16_t receiveSPIExternalADC()
+{
+  // 0-8192 max
+
+  PORTB &= ~(1 << PORTB2); // set CS pin(PB2) as low
+
+  // start transmission
+  SPDR = 0; // send dummy data
+  // wait for transmission complete
+  while (!(SPSR & (1 << SPIF)))
+    ;
+  // read data
+  uint8_t highByte = SPDR; // first 3 byte
+                           // start transmission
+  SPSR |= (1 << SPIF);     // clear flag
+  SPDR = 0;                // send dummy data
+  // wait for transmission complete
+  while (!(SPSR & (1 << SPIF)))
+    ;
+  // read data
+  uint8_t lowByte = SPDR; // last  bit
+  PORTB |= (1 << PORTB2); // set CS pin(PB2) as high
+
+  uint16_t data = (((highByte & 0x1F) << 8) | lowByte); // highbyte first 5 bit, lowbyte 8 bit -> 13 bit
+
+  return data;
+}
+
 void commitData()
 {
   PORTD |= (1 << PORTD4); // set E pin(PD4) as high
@@ -60,7 +101,7 @@ void lcdDisplayString(char *str)
   while (*str != '\0')
   {
     sendLCDData(*str);
-    _delay_ms(10);
+    _delay_ms(1);
     str++; // move pointer by 1
   }
 }
@@ -68,18 +109,29 @@ void lcdDisplayString(char *str)
 void lcdClearScreen()
 {
   sendLCDCommand(0x1);
-  _delay_ms(10);
+  _delay_ms(2);
+}
+
+void lcdFirstLine()
+{
+  sendLCDCommand(0x80);
+  _delay_ms(2);
+}
+
+void lcdSecondLine()
+{
+  sendLCDCommand(0xC0);
+  _delay_ms(2);
 }
 
 void initLCD()
 {
-  _delay_ms(100);
+  _delay_ms(200);
 
   DDRC |= 0x0F;                         // set as output PC0-3
   PORTC &= 0xF0;                        // clear PC0-3
   DDRD |= (1 << DDD2) | (1 << DDD4);    // set as output PD2,4
   PORTD &= ~(1 << DDD2) | ~(1 << DDD4); // clear PD2,4
-
   // send initial command 4bit mode
   sendLCDCommand(0x33);
   sendLCDCommand(0x32);
@@ -92,50 +144,31 @@ void initLCD()
 
 char buffer[16];
 
-uint16_t adcValue;
-
 int main()
 {
+  _delay_ms(1000);
   initLCD();
   lcdClearScreen();
-  //  pg20-21
-  //   set adc target pin
-  ADMUX &= 0x00; // clear mux
-  // set reference voltatge to external avcc
-  ADMUX |= (0b00000100); // set mux as for adc4
-  ADMUX |= (1 << REFS0); // set REFS0 as 1, aref with external capacitor at aref
-  // pg25
-  ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADIE); // set clock for adc -> division factor 128 , enable interupt by ADIE
-
-  sei();
+  initSPIforExternalADC();
 
   while (1)
   {
 
-    // see timing diagram pg28-29
-    //  start conversion
-    //  ADCSRA ADC Control and Status Register A
-    ADCSRA |= (1 << ADSC);
-
-    // interrupt will be triggered when conversion is done
-
-    // ADIF -> ADC Interupt Flag
-    // read done
-    // adc is value 0-1024 = 0-5V
-    // adc to voltage mV : convert to mVolt scale (adcValue/1024.0 * 5) /1000
-    // T = (V-500)/10
-    // // uint16_t voltage = (adcValue / 1024.0 * 5000); //
-    // itoa(voltage, buffer, 10);
-    lcdDisplayString("Voltage : ");
-    // lcdDisplayString(buffer);
-    lcdDisplayString("mv");
+    // // receive data from external adc
+    float voltage = receiveSPIExternalADC() / 8192.0 * 5; // 0-8192 -> 0-5000
+    // 100c -> 1.5v
+    // 0c -> 0.40v
+    // convert voltage to temperature on straight line
+    float temperature =  (voltage - 0.40) / 1.5 * 100; // 0-100c
+    itoa(temperature, buffer, 10);
+    lcdFirstLine();
+    lcdDisplayString("T: ");
+    lcdDisplayString(buffer);
+    lcdDisplayString("c");
+    lcdSecondLine();
+    lcdDisplayString("Temperature ");
 
     _delay_ms(1000);
     lcdClearScreen();
   }
-}
-
-ISR(ADC_vect)
-{
-  adcValue = ADC;
 }
