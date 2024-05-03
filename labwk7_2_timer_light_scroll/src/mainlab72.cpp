@@ -85,28 +85,25 @@ ISR(TIMER0_OVF_vect)
   }
 }
 
-int example16mhzctc(){
-  // set to ctc mode
-  TCCR1B |= (1 << WGM12);
-  // set prescaler to 1024
-  TCCR1B |= (1 << CS12) | (1 << CS10);
+// int example16mhzctc(){
+//   // set to ctc mode
+//   TCCR1B |= (1 << WGM12);
+//   // set prescaler to 1024
+//   TCCR1B |= (1 << CS12) | (1 << CS10);
 
-  // only trigger on 1 second
-  // 8000000 / 1024 = 7812.5
-  OCR1A = 7812;
+//   // only trigger on 1 second
+//   // 8000000 / 1024 = 7812.5
+//   OCR1A = 7812;
 
-  // enable interrupt
+//   // enable interrupt
 
-  TIMSK1 |= (1 << OCIE1A);
+//   TIMSK1 |= (1 << OCIE1A);
 
-}
-ISR(TIMER1_COMPA_vect)
-{
-  // do something
-}
-
-
-
+// }
+// ISR(TIMER1_COMPA_vect)
+// {
+//   // do something
+// }
 
 int main()
 {
