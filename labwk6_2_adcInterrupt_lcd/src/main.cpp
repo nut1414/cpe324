@@ -124,10 +124,11 @@ int main()
     // adc is value 0-1024 = 0-5V
     // adc to voltage mV : convert to mVolt scale (adcValue/1024.0 * 5) /1000
     // T = (V-500)/10
-    // // uint16_t voltage = (adcValue / 1024.0 * 5000); //
-    // itoa(voltage, buffer, 10);
+
+    uint16_t voltage = (adcValue / 1024.0 * 5000); //
+    itoa(voltage, buffer, 10);
     lcdDisplayString("Voltage : ");
-    // lcdDisplayString(buffer);
+    lcdDisplayString(buffer);
     lcdDisplayString("mv");
 
     _delay_ms(1000);

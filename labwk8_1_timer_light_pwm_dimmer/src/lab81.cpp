@@ -42,7 +42,7 @@ int init_pwm()
   TCCR1A |= (1 << WGM11) | (1 << WGM10);
   TCCR1B |= (1 << WGM12);
 
-  // set OC1B
+  // set non-inverting mode for OC1B
   TCCR1A |= (1 << COM1B1);
 
   // // set prescaler to 1
