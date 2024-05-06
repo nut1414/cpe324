@@ -123,7 +123,7 @@ int main()
     // wait for echo
     while (!(TIFR1 & (1 << ICF1)))
       ;
-    // toggle edge
+    // toggle edge to detect falling edge
     TCCR1B ^= (1 << ICES1);
     // clear flag
     TIFR1 |= (1 << ICF1);

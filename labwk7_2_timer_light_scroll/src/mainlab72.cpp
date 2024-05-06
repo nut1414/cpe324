@@ -53,7 +53,7 @@ ISR(TIMER1_OVF_vect)
       PORTB &= ~(0x0F);
     }
     else
-    {
+    { 
       turnOnLed(turnOn);
     }
 
@@ -129,6 +129,9 @@ int main()
 
   // setup pin D2 as input
   PORTD |= (1 << PORTD2);
+
+
+  
   // enable external interrupt 0 (pind2)
   // EIMSK |= (1 << INT0);
   // // enable interupt

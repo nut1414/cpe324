@@ -34,7 +34,7 @@ uint16_t receiveSPIExternalADC()
   while (!(SPSR & (1 << SPIF)))
     ;
   // read data
-  uint8_t highByte = SPDR; // first 3 byte
+  uint8_t highByte = SPDR; // first 4 bit
                            // start transmission
   SPSR |= (1 << SPIF);     // clear flag
   SPDR = 0;                // send dummy data
@@ -45,10 +45,44 @@ uint16_t receiveSPIExternalADC()
   uint8_t lowByte = SPDR; // last  bit
   PORTB |= (1 << PORTB2); // set CS pin(PB2) as high
 
-  uint16_t data = (((highByte & 0x1F) << 8) | lowByte); // highbyte first 5 bit, lowbyte 8 bit -> 13 bit
+  uint16_t data = (((highByte & 0x1F) << 8) | lowByte); // highbyte first 8 bit, lowbyte 8 bit -> 13 bit
 
   return data;
 }
+
+// generic spi init
+// void initSPI()
+// {
+//   // set MOSI, CS as output
+//   DDRB |= (1 << DDB2) | (1 << DDB5); // set as output PB2,5
+
+//   // mode 0, MSB first
+//   SPCR |= (1 << SPE) | (1 << MSTR); // spi enable, // master mode
+//   // fosc/8
+//   // 8mhz/8 = 1mhz
+//   SPCR |= (1 << SPR0);
+//   SPSR |= (1 << SPI2X);
+// }
+
+// generic spi send and receive
+// uint8_t sendSPI(uint8_t data)
+// {
+//   // start transmission
+//   SPDR = data; // send  data
+//   // wait for transmission complete
+//   while (!(SPSR & (1 << SPIF)))
+//     ;
+//   // read data
+//   uint8_t receivedData = SPDR;
+//   return receivedData;
+// }
+
+// generic spi receive only
+// uint8_t receiveSPI()
+// {
+//   uint8_t receivedData = sendSPI(0);
+//   return receivedData;
+// }
 
 void commitData()
 {
@@ -159,7 +193,7 @@ int main()
     // 100c -> 1.5v
     // 0c -> 0.40v
     // convert voltage to temperature on straight line
-    float temperature =  (voltage - 0.40) / 1.5 * 100; // 0-100c
+    float temperature = (voltage - 0.40) / 1.5 * 100; // 0-100c
     itoa(temperature, buffer, 10);
     lcdFirstLine();
     lcdDisplayString("T: ");
