@@ -115,14 +115,14 @@ int main()
   while (1)
   {
     generateTrigger();
-    // reset timer
-    TCNT1 = 0;
-    TCCR1B |= (1 << CS11);  // start timer set prescaler 8 -> 8MHz/8 = 1MHz -> 1us
-    TCCR1B |= (1 << ICES1); // set input capture edge select to rising edge
+    TCCR1B |= (1 << CS11); // start timer set prescaler 8 -> 8MHz/8 = 1MHz -> 1us
     // start timer
+    TCCR1B |= (1 << ICES1); // set input capture edge select to rising edge
     // wait for echo
     while (!(TIFR1 & (1 << ICF1)))
       ;
+    // reset timer
+    TCNT1 = 0;
     // toggle edge to detect falling edge
     TCCR1B ^= (1 << ICES1);
     // clear flag
