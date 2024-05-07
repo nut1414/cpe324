@@ -8,6 +8,22 @@
 
 volatile int turnOn = 1;
 
+// pin led
+// x  y(short)
+// x - PB1
+// y - GND
+
+// pin button
+// |  |
+// i  j
+// k  l
+// |  |
+// i - VCC
+// j - PD2
+
+
+
+
 int main()
 {
   // setup pin B1 as output
@@ -19,7 +35,7 @@ int main()
   // enable interupt
   EICRA |= (1 << ISC01);
   sei();
-
+    
   while (1)
   {
 
