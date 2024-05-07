@@ -43,6 +43,7 @@ uint8_t i2c_read(uint8_t ackVal)
     ;
   return TWDR;
 }
+
 void i2c_stop()
 {
   TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
@@ -57,6 +58,7 @@ void rtc_init(void)
   i2c_write(0x00);
   i2c_stop();
 }
+
 void rtc_setTime(uint8_t h, uint8_t m, uint8_t s, uint8_t D, uint8_t M, uint8_t Y)
 {
   i2c_start();

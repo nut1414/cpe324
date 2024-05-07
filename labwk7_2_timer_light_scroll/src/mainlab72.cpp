@@ -53,7 +53,7 @@ ISR(TIMER1_OVF_vect)
       PORTB &= ~(0x0F);
     }
     else
-    { 
+    {
       turnOnLed(turnOn);
     }
 
@@ -85,21 +85,18 @@ ISR(TIMER0_OVF_vect)
   }
 }
 
-// int example16mhzctc(){
+// int exampleTimer1CTC(){
 //   // set to ctc mode
 //   TCCR1B |= (1 << WGM12);
 //   // set prescaler to 1024
 //   TCCR1B |= (1 << CS12) | (1 << CS10);
-
 //   // only trigger on 1 second
 //   // 8000000 / 1024 = 7812.5
 //   OCR1A = 7812;
-
 //   // enable interrupt
-
 //   TIMSK1 |= (1 << OCIE1A);
-
 // }
+
 // ISR(TIMER1_COMPA_vect)
 // {
 //   // do something
@@ -130,8 +127,6 @@ int main()
   // setup pin D2 as input
   PORTD |= (1 << PORTD2);
 
-
-  
   // enable external interrupt 0 (pind2)
   // EIMSK |= (1 << INT0);
   // // enable interupt

@@ -50,39 +50,38 @@ uint16_t receiveSPIExternalADC()
   return data;
 }
 
-// generic spi init
-// void initSPI()
-// {
-//   // set MOSI, CS as output
-//   DDRB |= (1 << DDB2) | (1 << DDB5); // set as output PB2,5
+// generic spi init function
+void initSPI()
+{
+  // set MOSI, CS as output
+  DDRB |= (1 << DDB2) | (1 << DDB5); // set as output PB2,5
+  // mode 0, MSB first
+  SPCR |= (1 << SPE) | (1 << MSTR); // spi enable, // master mode
+  // fosc/8
+  // 8mhz/8 = 1mhz
+  SPCR |= (1 << SPR0);
+  SPSR |= (1 << SPI2X);
+}
 
-//   // mode 0, MSB first
-//   SPCR |= (1 << SPE) | (1 << MSTR); // spi enable, // master mode
-//   // fosc/8
-//   // 8mhz/8 = 1mhz
-//   SPCR |= (1 << SPR0);
-//   SPSR |= (1 << SPI2X);
-// }
+// generic spi send and receive function
+uint8_t sendSPI(uint8_t data)
+{
+  // start transmission
+  SPDR = data; // send  data
+  // wait for transmission complete
+  while (!(SPSR & (1 << SPIF)))
+    ;
+  // read data
+  uint8_t receivedData = SPDR;
+  return receivedData;
+}
 
-// generic spi send and receive
-// uint8_t sendSPI(uint8_t data)
-// {
-//   // start transmission
-//   SPDR = data; // send  data
-//   // wait for transmission complete
-//   while (!(SPSR & (1 << SPIF)))
-//     ;
-//   // read data
-//   uint8_t receivedData = SPDR;
-//   return receivedData;
-// }
-
-// generic spi receive only
-// uint8_t receiveSPI()
-// {
-//   uint8_t receivedData = sendSPI(0);
-//   return receivedData;
-// }
+// generic spi receive only function
+uint8_t receiveSPI()
+{
+  uint8_t receivedData = sendSPI(0);
+  return receivedData;
+}
 
 void commitData()
 {

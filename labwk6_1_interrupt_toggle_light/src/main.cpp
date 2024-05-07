@@ -21,8 +21,12 @@ volatile int turnOn = 1;
 // i - VCC
 // j - PD2
 
-
-
+ISR(INT0_vect)
+{
+  turnOn = !turnOn;
+  _delay_ms(100);
+  PORTB &= ~(1 << PORTB1);
+}
 
 int main()
 {
@@ -35,7 +39,7 @@ int main()
   // enable interupt
   EICRA |= (1 << ISC01);
   sei();
-    
+
   while (1)
   {
 
@@ -49,11 +53,4 @@ int main()
       _delay_ms(2000);
     }
   }
-}
-
-ISR(INT0_vect)
-{
-  turnOn = !turnOn;
-  _delay_ms(100);
-  PORTB &= ~(1 << PORTB1);
 }

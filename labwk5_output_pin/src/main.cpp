@@ -3,6 +3,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+// DDRB |= (1 << DDB3);    // set pin 3 of Port B as output
+// PORTB |= (1 << PB3);    // set pin 3 of Port B high
+// PORTB &= ~(1 << PB3);   // set pin 3 of Port B low
+// PORTB |= (1 << PORTB3); // set pin 3 high again
+// PORTB ^= (1 << PB3);    // toggles the state of the bit
+// uint8_t pinValue = PINB & (1 << PINB4);
+
 int main(void)
 {
   /* Replace with your application code */

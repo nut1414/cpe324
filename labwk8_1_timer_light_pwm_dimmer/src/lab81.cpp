@@ -28,6 +28,7 @@ int init_adc()
   // set clock for adc -> division factor 128 , enable interupt by ADIE
   ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADIE);
 }
+
 ISR(ADC_vect)
 {
   adc_value = ADC;

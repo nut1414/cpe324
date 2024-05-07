@@ -94,10 +94,31 @@ char buffer[16];
 
 uint16_t adcValue;
 
+// void setupADC(uint8_t muxPin){
+//   //  pg20-21
+//   //   set adc target pin
+//   ADMUX &= 0x00; // clear mux
+//   // set reference voltatge to external avcc
+//   ADMUX |= (0b00000100); // set mux as for adc4
+//   ADMUX |= (1 << REFS0); // set REFS0 as 1, aref with external capacitor at aref
+//   // pg25
+//   ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADIE); // set clock for adc -> division factor 128 , enable interupt by ADIE
+// }
+
+// void startADCconversion(){
+//   // see timing diagram pg28-29
+//   //  start conversion
+//   //  ADCSRA ADC Control and Status Register A
+//   ADCSRA |= (1 << ADSC);
+// }
+
 int main()
 {
   initLCD();
   lcdClearScreen();
+
+  // setup mux pin
+
   //  pg20-21
   //   set adc target pin
   ADMUX &= 0x00; // clear mux
