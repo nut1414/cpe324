@@ -1,0 +1,20 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"name": "kor1",
+		"path": "kor1"
+	},
+	{
+		"name": "kor2",
+		"path": "kor2"
+	},
+	{
+		"name": "kor3",
+		"path": "kor3"
+	}
+],
+  "settings": {}
+}
